@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.seekyummy.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="配置中心的作用 统一管理每一个微服务模块的配置  Nacos实现配置中心1. 在微服务中引入Nacos Config Starter1234&lt;dependency&gt;    &lt;groupId&gt;com.alibaba.cloud&lt;&#x2F;groupId&gt;    &lt;artifactId&gt;spring-cloud-starter-alibaba-nacos-con">
+<meta property="og:type" content="article">
+<meta property="og:title" content="配置中心">
+<meta property="og:url" content="http://www.seekyummy.com/2021/07/14/%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83/index.html">
+<meta property="og:site_name" content="Sen Yuan&#39;s Blog">
+<meta property="og:description" content="配置中心的作用 统一管理每一个微服务模块的配置  Nacos实现配置中心1. 在微服务中引入Nacos Config Starter1234&lt;dependency&gt;    &lt;groupId&gt;com.alibaba.cloud&lt;&#x2F;groupId&gt;    &lt;artifactId&gt;spring-cloud-starter-alibaba-nacos-con">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-07-14T07:26:31.000Z">
+<meta property="article:modified_time" content="2021-07-14T11:38:23.649Z">
+<meta property="article:author" content="Sen Yuan">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://www.seekyummy.com/2021/07/14/%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>配置中心 | Sen Yuan's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Sen Yuan's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://www.seekyummy.com/2021/07/14/%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/%E5%A4%B4%E5%83%8F.jpg">
+      <meta itemprop="name" content="Sen Yuan">
+      <meta itemprop="description" content="熟能生巧</br>Practice Makes Perfect">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Sen Yuan's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          配置中心
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-07-14 15:26:31 / 修改时间：19:38:23" itemprop="dateCreated datePublished" datetime="2021-07-14T15:26:31+08:00">2021-07-14</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%BE%AE%E6%9C%8D%E5%8A%A1/" itemprop="url" rel="index"><span itemprop="name">微服务</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2021/07/14/%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2021/07/14/%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>1.1k</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>1 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="配置中心的作用"><a href="#配置中心的作用" class="headerlink" title="配置中心的作用"></a>配置中心的作用</h3><ul>
+<li>统一管理每一个微服务模块的配置</li>
+</ul>
+<h3 id="Nacos实现配置中心"><a href="#Nacos实现配置中心" class="headerlink" title="Nacos实现配置中心"></a>Nacos实现配置中心</h3><h4 id="1-在微服务中引入Nacos-Config-Starter"><a href="#1-在微服务中引入Nacos-Config-Starter" class="headerlink" title="1. 在微服务中引入Nacos Config Starter"></a>1. 在微服务中引入Nacos Config Starter</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>com.alibaba.cloud<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-cloud-starter-alibaba-nacos-config<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="2-resources中创建一个bootstrap-properties配置文件"><a href="#2-resources中创建一个bootstrap-properties配置文件" class="headerlink" title="2. resources中创建一个bootstrap.properties配置文件"></a>2. resources中创建一个bootstrap.properties配置文件</h4><figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">//当前应用的名字</span></span><br><span class="line"><span class="meta">spring.application.name</span>=<span class="string">gulimall-coupon</span></span><br><span class="line"><span class="attr">//配置中心地址</span></span><br><span class="line"><span class="meta">spring.cloud.nacos.config.server-addr</span>=<span class="string">127.0.0.1:8848</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="3-RefreshScope动态刷新注解"><a href="#3-RefreshScope动态刷新注解" class="headerlink" title="3. @RefreshScope动态刷新注解"></a>3. @RefreshScope动态刷新注解</h4><h4 id="4-命名空间（进行配置隔离）"><a href="#4-命名空间（进行配置隔离）" class="headerlink" title="4. 命名空间（进行配置隔离）"></a>4. 命名空间（进行配置隔离）</h4><ul>
+<li>默认：public（保留空间），新增的配置都在public空间</li>
+<li>可以在nacos命名空间中建立新的命名空间，例如为dev建立命名空间，test建立命名空间，然后分别建立properties配置（基于开发环境进行隔离）</li>
+<li>为某一个微服务选择某一个命名空间：在对应的bootstrap.properties中添加spring.cloud.nacos.config.namespace=xxx（命名空间的ID）</li>
+<li>可以为某一个微服务创建属于自己的命名空间，实现配置的隔离。 </li>
+</ul>
+<h4 id="5-概念"><a href="#5-概念" class="headerlink" title="5. 概念"></a>5. 概念</h4><ul>
+<li>配置集：所有的配置的集合称为配置集</li>
+<li>配置集ID： nacos中的 Data ID（配置文件名）</li>
+<li>配置分组： 默认所有的配置集都属于Default Group（声明某一个微服务使用哪一个组的配置，在bootstrap中添加spring.cloud.nacos.config.group=xxx（group名称））</li>
+</ul>
+<h4 id="6-同时加载多个配置集"><a href="#6-同时加载多个配置集" class="headerlink" title="6. 同时加载多个配置集"></a>6. 同时加载多个配置集</h4><ul>
+<li>微服务可能有多种的配置，例如datasource的配置，三大框架的配置，nacos配置等等。可以在该微服务的命名空间中创建对应的properties配置文件，然后在bootstrap.properties中声明使用这一些配置文件。<figure class="highlight yml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">spring.cloud.nacos.config.ext-config[0].data-id=xxx</span></span><br><span class="line"><span class="string">spring.cloud.nacos.config.ext-config[0].group=xxx</span></span><br><span class="line"><span class="string">spring.cloud.nacos.config.ext-config[0].refresh=true</span></span><br></pre></td></tr></table></figure></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/07/14/%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83/" rel="prev" title="注册中心">
+      <i class="fa fa-chevron-left"></i> 注册中心
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/09/02/HashMap%20%E6%BA%90%E7%A0%81%E7%AC%94%E8%AE%B0/" rel="next" title="HashMap源码笔记">
+      HashMap源码笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#配置中心的作用"><span class="nav-number">1.</span> <span class="nav-text">配置中心的作用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Nacos实现配置中心"><span class="nav-number">2.</span> <span class="nav-text">Nacos实现配置中心</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-在微服务中引入Nacos-Config-Starter"><span class="nav-number">2.1.</span> <span class="nav-text">1. 在微服务中引入Nacos Config Starter</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-resources中创建一个bootstrap-properties配置文件"><span class="nav-number">2.2.</span> <span class="nav-text">2. resources中创建一个bootstrap.properties配置文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-RefreshScope动态刷新注解"><span class="nav-number">2.3.</span> <span class="nav-text">3. @RefreshScope动态刷新注解</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-命名空间（进行配置隔离）"><span class="nav-number">2.4.</span> <span class="nav-text">4. 命名空间（进行配置隔离）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#5-概念"><span class="nav-number">2.5.</span> <span class="nav-text">5. 概念</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#6-同时加载多个配置集"><span class="nav-number">2.6.</span> <span class="nav-text">6. 同时加载多个配置集</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Sen Yuan"
+      src="/images/%E5%A4%B4%E5%83%8F.jpg">
+  <p class="site-author-name" itemprop="name">Sen Yuan</p>
+  <div class="site-description" itemprop="description">熟能生巧</br>Practice Makes Perfect</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">52</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Sen Yuan</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">100k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">1:30</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'NGsgzQRsR99q4wPprCtLgPlE-gzGzoHsz',
+      appKey     : 'CJy5zpjdMfW3F8p8TkHWSUwz',
+      placeholder: "欢迎评论~~",
+      avatar     : 'wavatar',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : false,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

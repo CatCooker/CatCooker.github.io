@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.seekyummy.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Java对象的引用分析JVM会自动回收不再被使用的对象。而判断一个对象是否继续被使用，即判断该对象的引用是否在某一个地方被使用，需要判断对象的引用是否还存在。  引用计数法   该方法统计每一个对象的引用次数。当没有其它地方引用该对象时，即引用次数为0时，回收该对象。但该算法存在一个问题，即某些对象已经不使用了，但是引用计数却不为零，没办法完成回收。例如对象之间的相互循环引用。上图中，instan">
+<meta property="og:type" content="article">
+<meta property="og:title" content="JVM垃圾回收">
+<meta property="og:url" content="http://www.seekyummy.com/2021/09/10/JVM%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6/index.html">
+<meta property="og:site_name" content="Sen Yuan&#39;s Blog">
+<meta property="og:description" content="Java对象的引用分析JVM会自动回收不再被使用的对象。而判断一个对象是否继续被使用，即判断该对象的引用是否在某一个地方被使用，需要判断对象的引用是否还存在。  引用计数法   该方法统计每一个对象的引用次数。当没有其它地方引用该对象时，即引用次数为0时，回收该对象。但该算法存在一个问题，即某些对象已经不使用了，但是引用计数却不为零，没办法完成回收。例如对象之间的相互循环引用。上图中，instan">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i.loli.net/2021/09/10/5GXpgaboB64nZxz.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/10/ZwbNQt4T5Glae8d.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/17/FwHMeKlfxbcjiX7.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/17/mBo5K3qTSICeN71.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/17/8amK3rRQnzbYHky.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/17/dClY27rMoKbyq9g.png">
+<meta property="og:image" content="https://i.loli.net/2021/09/17/pZm9oLFYcv82Hbt.png">
+<meta property="article:published_time" content="2021-09-10T13:15:56.000Z">
+<meta property="article:modified_time" content="2021-09-17T02:10:43.280Z">
+<meta property="article:author" content="Sen Yuan">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2021/09/10/5GXpgaboB64nZxz.png">
+
+<link rel="canonical" href="http://www.seekyummy.com/2021/09/10/JVM%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>JVM垃圾回收 | Sen Yuan's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Sen Yuan's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://www.seekyummy.com/2021/09/10/JVM%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/%E5%A4%B4%E5%83%8F.jpg">
+      <meta itemprop="name" content="Sen Yuan">
+      <meta itemprop="description" content="熟能生巧</br>Practice Makes Perfect">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Sen Yuan's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          JVM垃圾回收
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-09-10 21:15:56" itemprop="dateCreated datePublished" datetime="2021-09-10T21:15:56+08:00">2021-09-10</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-09-17 10:10:43" itemprop="dateModified" datetime="2021-09-17T10:10:43+08:00">2021-09-17</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/JVM/" itemprop="url" rel="index"><span itemprop="name">JVM</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2021/09/10/JVM%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2021/09/10/JVM%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>958</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>1 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="Java对象的引用分析"><a href="#Java对象的引用分析" class="headerlink" title="Java对象的引用分析"></a>Java对象的引用分析</h3><p>JVM会自动回收不再被使用的对象。而判断一个对象是否继续被使用，即判断该对象的引用是否在某一个地方被使用，需要判断对象的引用是否还存在。</p>
+<ol>
+<li>引用计数法</li>
+</ol>
+<ul>
+<li>该方法统计每一个对象的引用次数。当没有其它地方引用该对象时，即引用次数为0时，回收该对象。但该算法存在一个问题，即某些对象已经不使用了，但是引用计数却不为零，没办法完成回收。例如对象之间的相互循环引用。<br><img src="https://i.loli.net/2021/09/10/5GXpgaboB64nZxz.png" alt="循环引用.png"><br>上图中，<strong>instanceA</strong>和<strong>instanceB</strong>互相引用，但是这两个对象已经没有引用能够访问到，无法释放之间的相互引用，因为引用计数不为0，对象内存无法释放，会造成内存泄漏。Java虚拟机不采取这种方法将对象进行回收。</li>
+</ul>
+<ol start="2">
+<li>可达性分析</li>
+</ol>
+<ul>
+<li>该方法维护一个GC Roots Set。凡是可以从该集合中的GC Roots到达的对象，都是目前还在使用的，有存在意义的对象。而那些无法由GC Roots到达的对象，都是需要回收的对象。<br><img src="https://i.loli.net/2021/09/10/ZwbNQt4T5Glae8d.png" alt="GC Roots.png"></li>
+</ul>
+<h3 id="JVM-垃圾收集器"><a href="#JVM-垃圾收集器" class="headerlink" title="JVM 垃圾收集器"></a>JVM 垃圾收集器</h3><h5 id="新生代"><a href="#新生代" class="headerlink" title="新生代"></a>新生代</h5><ol>
+<li>Serial垃圾收集器</li>
+<li>ParNew垃圾收集器</li>
+<li>Parallel Scavenge垃圾收集器 – 吞吐量优先收集器</li>
+</ol>
+<hr>
+<h5 id="老年代"><a href="#老年代" class="headerlink" title="老年代"></a>老年代</h5><ol>
+<li><p>Serial Old垃圾收集器</p>
+</li>
+<li><p>Parallel Old垃圾收集器</p>
+</li>
+<li><p>CMS垃圾收集器 – 并发低停顿收集器<br>并发的可达性分析。当用户线程与垃圾收集器并发工作时，用户线程会改变某一些引用导致新垃圾的产生。而垃圾收集器没办法实时地反映出这一些变动。可能会导致两种问题的出现。</p>
+</li>
+</ol>
+<ul>
+<li>原本消亡的对象被标记为存活。这些垃圾被称为浮动垃圾，等待下一轮垃圾回收清除(CMS垃圾收集器可能产生的问题)</li>
+<li>原本存活的对象被标记为消亡。此时程序将会出现问题。<br><img src="https://i.loli.net/2021/09/17/FwHMeKlfxbcjiX7.png" alt="并发可达性分析1.png"><br><img src="https://i.loli.net/2021/09/17/mBo5K3qTSICeN71.png" alt="并发可达性分析2.png"><br><img src="https://i.loli.net/2021/09/17/8amK3rRQnzbYHky.png" alt="并发可达性分析3.png"><br><img src="https://i.loli.net/2021/09/17/dClY27rMoKbyq9g.png" alt="并发可达性分析4.png"><br><img src="https://i.loli.net/2021/09/17/pZm9oLFYcv82Hbt.png" alt="并发可达性分析5.png"></li>
+<li>解决办法：remark。将改变引用关系的黑色对象记录下来，待并发扫描结束后针对这写对象进行再次的扫描(CMS的做法)</li>
+<li>CMS垃圾收集的过程<ul>
+<li>STW</li>
+<li>初始标记： 从GC Roots能够直接到达的对象</li>
+<li>并发标记： 并发地进行可达性分析标记</li>
+<li>STW</li>
+<li>重新标记：修正并发过程中由于用户进程产生的引用修改导致的问题</li>
+<li>并发清除：使用<strong>标记-清除</strong>算法进行垃圾回收。考虑到并发的情况，不能够移动对象。</li>
+</ul>
+</li>
+<li>由于使用的是标记-清除算法，该算法虽然不需要移动对象，但是会产生内存碎片。最后可能导致无法为大对象分配连续的内存空间。此时可能会产生并发失败的问题，需要改用Full GC对整个堆进行一次回收。(CMS的备选方案通常是Serial Old)</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/09/10/String%E7%9B%B8%E5%85%B3/" rel="prev" title="String相关">
+      <i class="fa fa-chevron-left"></i> String相关
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/09/13/ByteCode/" rel="next" title="ByteCode">
+      ByteCode <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Java对象的引用分析"><span class="nav-number">1.</span> <span class="nav-text">Java对象的引用分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#JVM-垃圾收集器"><span class="nav-number">2.</span> <span class="nav-text">JVM 垃圾收集器</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#新生代"><span class="nav-number">2.0.1.</span> <span class="nav-text">新生代</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#老年代"><span class="nav-number">2.0.2.</span> <span class="nav-text">老年代</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Sen Yuan"
+      src="/images/%E5%A4%B4%E5%83%8F.jpg">
+  <p class="site-author-name" itemprop="name">Sen Yuan</p>
+  <div class="site-description" itemprop="description">熟能生巧</br>Practice Makes Perfect</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">52</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Sen Yuan</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">100k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">1:30</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'NGsgzQRsR99q4wPprCtLgPlE-gzGzoHsz',
+      appKey     : 'CJy5zpjdMfW3F8p8TkHWSUwz',
+      placeholder: "欢迎评论~~",
+      avatar     : 'wavatar',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : false,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>

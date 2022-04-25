@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"www.seekyummy.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="1. 对现存的项目进行Git管理 git init: 进入项目所在目录，使用命令 git init  该命令会在当前目录创建一个.git文件夹，所有 Git 需要的数据和资源都存放在这个文件夹中。 git add fileName: 该命令命令告诉 Git 开始对某些文件进行跟踪，也可将文件放入暂存区中。 git commit -m message: 该命令将跟踪的文件进行提交，同时增加一则提交信">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Git基础">
+<meta property="og:url" content="http://www.seekyummy.com/2021/03/03/Git%E5%9F%BA%E7%A1%80/index.html">
+<meta property="og:site_name" content="Sen Yuan&#39;s Blog">
+<meta property="og:description" content="1. 对现存的项目进行Git管理 git init: 进入项目所在目录，使用命令 git init  该命令会在当前目录创建一个.git文件夹，所有 Git 需要的数据和资源都存放在这个文件夹中。 git add fileName: 该命令命令告诉 Git 开始对某些文件进行跟踪，也可将文件放入暂存区中。 git commit -m message: 该命令将跟踪的文件进行提交，同时增加一则提交信">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i.loli.net/2021/03/03/iE9XfMuFKyQJcjN.png">
+<meta property="article:published_time" content="2021-03-03T06:24:08.000Z">
+<meta property="article:modified_time" content="2021-03-03T08:22:01.444Z">
+<meta property="article:author" content="Sen Yuan">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2021/03/03/iE9XfMuFKyQJcjN.png">
+
+<link rel="canonical" href="http://www.seekyummy.com/2021/03/03/Git%E5%9F%BA%E7%A1%80/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Git基础 | Sen Yuan's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Sen Yuan's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://www.seekyummy.com/2021/03/03/Git%E5%9F%BA%E7%A1%80/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/%E5%A4%B4%E5%83%8F.jpg">
+      <meta itemprop="name" content="Sen Yuan">
+      <meta itemprop="description" content="熟能生巧</br>Practice Makes Perfect">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Sen Yuan's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Git基础
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-03-03 14:24:08 / 修改时间：16:22:01" itemprop="dateCreated datePublished" datetime="2021-03-03T14:24:08+08:00">2021-03-03</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Git/" itemprop="url" rel="index"><span itemprop="name">Git</span></a>
+                </span>
+            </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Valine：</span>
+    
+    <a title="valine" href="/2021/03/03/Git%E5%9F%BA%E7%A1%80/#valine-comments" itemprop="discussionUrl">
+      <span class="post-comments-count valine-comment-count" data-xid="/2021/03/03/Git%E5%9F%BA%E7%A1%80/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  <br>
+            <span class="post-meta-item" title="本文字数">
+              <span class="post-meta-item-icon">
+                <i class="far fa-file-word"></i>
+              </span>
+                <span class="post-meta-item-text">本文字数：</span>
+              <span>853</span>
+            </span>
+            <span class="post-meta-item" title="阅读时长">
+              <span class="post-meta-item-icon">
+                <i class="far fa-clock"></i>
+              </span>
+                <span class="post-meta-item-text">阅读时长 &asymp;</span>
+              <span>1 分钟</span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="1-对现存的项目进行Git管理"><a href="#1-对现存的项目进行Git管理" class="headerlink" title="1. 对现存的项目进行Git管理"></a>1. 对现存的项目进行Git管理</h3><ol>
+<li><code>git init</code>: 进入项目所在目录，使用命令 <code>git init</code>  该命令会在当前目录创建一个.git文件夹，所有 Git 需要的数据和资源都存放在这个文件夹中。</li>
+<li><code>git add fileName</code>: 该命令命令告诉 Git 开始对某些文件进行跟踪，也可将文件放入暂存区中。</li>
+<li><code>git commit -m message</code>: 该命令将跟踪的文件进行提交，同时增加一则提交信息</li>
+<li><code>git status</code> 查看当前Git仓库的状态</li>
+</ol>
+<h3 id="2-克隆已有项目"><a href="#2-克隆已有项目" class="headerlink" title="2. 克隆已有项目"></a>2. 克隆已有项目</h3><ol>
+<li><code>git clone [url]</code>: 对url地址的项目克隆到本地。</li>
+</ol>
+<h3 id="3-一次完整的提交"><a href="#3-一次完整的提交" class="headerlink" title="3. 一次完整的提交"></a>3. 一次完整的提交</h3><ol>
+<li>当拥有git仓库后，我们需要指定哪些文件需要跟踪，哪些文件不需要跟踪。需要Git跟踪文件修改状态的文件使用```git add``命令进行添加。</li>
+<li>当我们对跟踪的文件进行修改时，Git会察觉到这些变化。当我们将文件修改完成后，可以将该文件放入暂存区。此时文件的状态就由<code>modified</code>转变为<code>staged</code>。如果想要取消某些文件的暂存状态，可以使用<code>git reset HEAD file</code>将文件变为待暂存状态。</li>
+<li>当我们完成所有的修改后，我们就可以使用<code>git commit -m message</code>将这些修改完成的文件进行提交。 <code>git commit -a</code> 将所有跟踪的文件都进行提交，即使一部分文件没有进行暂存。 <code>git commit --amend</code> 将修改最近一次提交</li>
+</ol>
+<p><img src="https://i.loli.net/2021/03/03/iE9XfMuFKyQJcjN.png" alt="lifecycle.png"></p>
+<h3 id="4-忽略无需进行版本控制的文件"><a href="#4-忽略无需进行版本控制的文件" class="headerlink" title="4. 忽略无需进行版本控制的文件"></a>4. 忽略无需进行版本控制的文件</h3><ol>
+<li>创建.gitignore文件，文件内容列出需要忽略的文件。</li>
+<li>匹配：</br><code>*</code>: 匹配零个或多个任意字符</br><code>[abc]</code>:  匹配任何一个列在方括号中的字符 </br><code>?</code>: 只匹配一个任意字符</br><code>[0-9]</code>: 表示匹配所有 0 到 9 的数字</br><code>build/</code>: 忽略该目录下的所有文件</li>
+</ol>
+<h3 id="5-文件删除操作"><a href="#5-文件删除操作" class="headerlink" title="5. 文件删除操作"></a>5. 文件删除操作</h3><ol>
+<li><code>git rm</code>: 删除项目中的文件,如果文件已经进行暂存，处于staged状态，则应该使用强制删除命令<code>git rm -f</code></li>
+<li><code>git rm --cached  xxxfile</code>: 仅是从跟踪清单中删除,不会真正删除目标文件(不想要继续跟踪某个文件)</li>
+</ol>
+<h3 id="6-文件移动-重命名-操作"><a href="#6-文件移动-重命名-操作" class="headerlink" title="6. 文件移动(重命名)操作"></a>6. 文件移动(重命名)操作</h3><p> <code>git mv file1 file2</code>：将文件名file1重新命名为file2</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/03/03/Git%E5%8E%9F%E7%90%86%E4%B8%8E%E9%85%8D%E7%BD%AE/" rel="prev" title="Git原理与配置">
+      <i class="fa fa-chevron-left"></i> Git原理与配置
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/03/03/Interface/" rel="next" title="Interface">
+      Interface <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="valine-comments"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-对现存的项目进行Git管理"><span class="nav-number">1.</span> <span class="nav-text">1. 对现存的项目进行Git管理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-克隆已有项目"><span class="nav-number">2.</span> <span class="nav-text">2. 克隆已有项目</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-一次完整的提交"><span class="nav-number">3.</span> <span class="nav-text">3. 一次完整的提交</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-忽略无需进行版本控制的文件"><span class="nav-number">4.</span> <span class="nav-text">4. 忽略无需进行版本控制的文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-文件删除操作"><span class="nav-number">5.</span> <span class="nav-text">5. 文件删除操作</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-文件移动-重命名-操作"><span class="nav-number">6.</span> <span class="nav-text">6. 文件移动(重命名)操作</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Sen Yuan"
+      src="/images/%E5%A4%B4%E5%83%8F.jpg">
+  <p class="site-author-name" itemprop="name">Sen Yuan</p>
+  <div class="site-description" itemprop="description">熟能生巧</br>Practice Makes Perfect</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">52</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Sen Yuan</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-area"></i>
+    </span>
+    <span title="站点总字数">100k</span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">1:30</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+
+<script>
+NexT.utils.loadComments(document.querySelector('#valine-comments'), () => {
+  NexT.utils.getScript('//unpkg.com/valine/dist/Valine.min.js', () => {
+    var GUEST = ['nick', 'mail', 'link'];
+    var guest = 'nick,mail,link';
+    guest = guest.split(',').filter(item => {
+      return GUEST.includes(item);
+    });
+    new Valine({
+      el         : '#valine-comments',
+      verify     : false,
+      notify     : false,
+      appId      : 'NGsgzQRsR99q4wPprCtLgPlE-gzGzoHsz',
+      appKey     : 'CJy5zpjdMfW3F8p8TkHWSUwz',
+      placeholder: "欢迎评论~~",
+      avatar     : 'wavatar',
+      meta       : guest,
+      pageSize   : '10' || 10,
+      visitor    : false,
+      lang       : '' || 'zh-cn',
+      path       : location.pathname,
+      recordIP   : false,
+      serverURLs : ''
+    });
+  }, window.Valine);
+});
+</script>
+
+</body>
+</html>
